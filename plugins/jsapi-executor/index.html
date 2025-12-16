@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8" />
+  <title>JsAPI Executor</title>
+  <script type="text/javascript" src="jquery.min.js"></script>
+  <script type="text/javascript" src="plugins.js"></script>
+  <script type="text/javascript" src="plugins-ui.js"></script>
+  <link rel="stylesheet" href="plugins.css">
+  <script type="text/javascript" src="main.js"></script>
+  <!-- WebSocket 客户端 - 用于接收外部命令 -->
+  <script type="text/javascript" src="ws-client.js"></script>
+  <style>
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial,
+        sans-serif;
+      background: #f5f7fb;
+    }
+
+    .wrap {
+      box-sizing: border-box;
+      height: 100%;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+    }
+
+    .row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    #quick-text {
+      flex: 1 1 auto;
+      padding: 6px 8px;
+      border: 1px solid #e0e4ee;
+      border-radius: 4px;
+      font-size: 13px;
+    }
+
+    #insert-btn {
+      padding: 6px 10px;
+      border-radius: 4px;
+      border: 1px solid #28a745;
+      background: #28a745;
+      color: #fff;
+      cursor: pointer;
+      font-size: 13px;
+    }
+
+    #status {
+      font-size: 12px;
+      margin-top: 4px;
+    }
+
+    #test-btn {
+      padding: 6px 10px;
+      border-radius: 4px;
+      border: 1px solid #28a745;
+      background: #28a745;
+      color: #fff;
+      cursor: pointer;
+      font-size: 13px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <div class="row">
+      <input id="quick-text" type="text" placeholder="在此输入要插入到文档中的内容" />
+      <button id="insert-btn">插入到文档</button>
+    </div>
+    <div id="status"></div>
+
+    <br />
+    <button id="test-btn" onclick="searchText()">搜索文字页码和位置</button>
+    <button id="test-btn" onclick="test2()">测试2</button>
+    <button id="test-btn" onclick="getAllComments()">获取所有批注</button>
+    <button id="test-btn" onclick="addComment()">添加评论</button>
+    <button id="test-btn" onclick="addContent()">添加内容</button>
+    <textarea id="command-text" placeholder="在此输入要执行的命令"></textarea>
+    <button id="paragraphs-btn">GetAllParagraphs</button>
+    <button id="pop1-btn">pop1</button>
+  </div>
+
+  <script>
+    function searchText() {
+      window.Asc.plugin.callCommand(function () {
+        var doc = Api.GetDocument();
+        var searchResults = doc.Search("text", false);
+        for (var i = 0; i < searchResults.length; i++) {
+          searchResults[i].SetBold(true);
+          let deliveryRun = searchResults[i]
+          var c = Api.AddComment(deliveryRun, "这是批注信息.", "操作员");
+        }
+        console.log("count:", searchResults.length);
+      }, false, function (res) {
+      });
+
+    }
+
+    function addCustomComment() {
+      window.Asc.plugin.executeMethod("AddComment", [
+        {
+          "UserName": "John Smith",
+          "QuoteText": text,
+          "Text": "comment",
+          "Time": "1662737941471",
+          "Solved": false,
+          "Replies": [
+            {
+              "UserName": "Mark Potato",
+              "Text": "reply 1",
+              "Time": "1662740895892",
+              "Solved": false
+            }
+          ]
+        }
+      ], function (comment) {
+        console.log(comment)
+      });
+    }
+
+    function GetAllParagraphs() {
+      window.Asc.plugin.callCommand(function () {
+        var doc = Api.GetDocument();          // 获取当前文档
+        var paragraphs = doc.GetAllParagraphs(); // 官方提供的段落获取方法
+
+        for (var i = 0; i < paragraphs.length; i++) {
+          var p = paragraphs[i];
+
+          // 获取段落纯文本
+          var text = p.GetText();
+
+          p.Select()
+          var currentPage = doc.GetCurrentPage();
+
+          let searchResults = p.Search("text", false);
+          if (searchResults.length > 0) {
+            searchResults[0].Select();
+            searchResults[0].SetBold(true);
+
+            let deliveryRun = searchResults[0]
+            var c = Api.AddComment(deliveryRun, "Align with new SLA policy? Current policy requires 5 days minimum.", "Operations Manager");
+
+            // 获取段落的 range
+            var range = searchResults[0].GetRange();
+
+            if (range) {
+              // console.log(range);
+              // // 页码（从 0 开始）
+              // var startPageIndex = range.GetStartPage();
+              // var endPageIndex = range.GetEndPage();
+
+              // // 段落在页面上的位置坐标
+              // var startPos = range.GetStartPos(); // {Left, Top, Right, Bottom, Width, Height}
+              // var endPos = range.GetEndPos();
+
+              // console.log("段落文字:", text)
+              // console.log("开始页码:", startPageIndex + 1);
+              // console.log("结束页码:", endPageIndex + 1);
+              // console.log("开始位置:", startPos);
+              // console.log("结束位置:", endPos);
+
+              let section = p.GetSection();
+              let startPageNumber = section.GetStartPageNumber();
+              console.log("段落文字:", text)
+              console.log("开始页码:", startPageNumber);
+              console.log("当前页码:", currentPage)
+            }
+          }
+        }
+      });
+    }
+
+    function getAllComments() {
+      window.Asc.plugin.executeMethod("GetAllComments", [], function (comments) {
+        console.log(comments)
+      });
+    }
+
+    function addComment() {
+      window.Asc.plugin.executeMethod("AddComment", [
+        {
+          "UserName": "John Smith",
+          "QuoteText": "text",
+          "Text": "comment",
+          "Time": "1662737941471",
+          "Solved": false,
+          "Replies": [
+            {
+              "UserName": "Mark Potato",
+              "Text": "reply 1",
+              "Time": "1662740895892",
+              "Solved": false
+            }
+          ]
+        }
+      ], function (comment) {
+        console.log(comment)
+      });
+    }
+    function addContent() {
+      Asc.scope.text = "插入内容到文档"
+      Asc.plugin.callCommand(() => {
+        const oDocument = Api.GetDocument()
+        const oParagraph = Api.CreateParagraph()
+        oParagraph.AddText(Asc.scope.text)
+        oDocument.InsertContent([oParagraph])
+      }, false, true, (returnValue) => {
+        console.log("returnValue:", returnValue)
+      })
+    }
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,25 @@
+{
+  "name": "JsAPI Executor",
+  "nameLocale": {
+    "en": "JsAPI Executor",
+    "zh": "JsAPI 执行器"
+  },
+  "guid": "asc.{jsapi-executor-1234-5678-90ab-cdef12345678}",
+  "version": "1.0.0",
+  "author": "Demo",
+  "description": "Execute JsAPI code inside the editor (Community Edition solution).",
+  "descriptionLocale": {
+    "zh": "在编辑器内部执行 JsAPI 代码（社区版方案）"
+  },
+  "variations": [
+    {
+      "description": "Word editor JsAPI executor (background mode)",
+      "isViewer": true,
+      "EditorsSupport": ["word"],
+      "url": "background.html",
+      "icons": ["resources/icon.svg", "resources/icon.svg"],
+      "isActivated": true,
+      "autoStart": true
+    }
+  ]
+}

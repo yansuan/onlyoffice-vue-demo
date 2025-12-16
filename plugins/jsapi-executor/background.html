@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <title>JsAPI Executor Background</title>
+    <!-- 只加载必要的插件脚本 -->
+    <script type="text/javascript" src="plugins.js"></script>
+    <!-- WebSocket 客户端 - 用于接收外部命令 -->
+    <script type="text/javascript" src="ws-client.js"></script>
+    <style>
+        /* 隐藏所有内容，插件在后台运行 */
+        html,
+        body {
+            display: none;
+            margin: 0;
+            padding: 0;
+            width: 0;
+            height: 0;
+            overflow: hidden;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- 后台插件，无 UI -->
+    <script>
+        (function (window, undefined) {
+            window.Asc.plugin.init = function () {
+                // window.Asc.plugin.callCommand(() => {
+                //     var doc = Api.GetDocument()
+                //     var paragraphs = doc.GetAllParagraphs()
+                //     var results = []
+                //     for (var i = 0; i < paragraphs.length; i++) {
+
+                //         const p = paragraphs[i];
+
+                //         var range = p.GetRange()
+                //         console.log("paragraph:", i, {
+                //             index: i,
+                //             page: range ? range.GetStartPage() + 1 : null
+                //         })
+                //     }
+                // }, false, false, () => {
+                //     console.log("get paragraphs")
+                // })
+
+                // window.Asc.plugin.callCommand(() => {
+                //     const doc = Api.GetDocument()
+                //     const oSearchResults = doc.Search("text", false)
+                //     console.log("document preload");
+                // });
+
+                // 打开批注
+                window.Asc.plugin.executeMethod("OpenComments", []);
+
+                //隐藏插件菜单
+                window.Asc.plugin.executeMethod("HidePluginMenu", []);
+
+                //隐藏菜单栏
+                window.Asc.plugin.executeMethod("HideMenuBar", []);
+
+                //隐藏工具栏
+                window.Asc.plugin.executeMethod("HideToolBar", []);
+
+                //隐藏状态栏
+                window.Asc.plugin.executeMethod("HideStatusBar", []);
+
+                //隐藏工具栏按钮
+                window.Asc.plugin.executeMethod("HideToolBarButton", []);
+
+                //隐藏状态栏按钮
+                window.Asc.plugin.executeMethod("HideStatusBarButton", []);
+
+                //隐藏菜单栏按钮
+                window.Asc.plugin.executeMethod("HideMenuBarButton", []);
+            }
+        })(window, undefined);
+
+
+        // 确保插件环境就绪后初始化 WebSocket
+        if (window.Asc && window.Asc.plugin) {
+            console.log('[JsAPI Executor] 后台插件已启动，等待 WebSocket 连接...');
+        } else {
+            // 如果插件环境未就绪，等待一下
+            setTimeout(function () {
+                if (window.Asc && window.Asc.plugin) {
+                    console.log('[JsAPI Executor] 后台插件已启动，等待 WebSocket 连接...');
+                }
+            }, 100);
+        }
+    </script>
+</body>
+
+</html>

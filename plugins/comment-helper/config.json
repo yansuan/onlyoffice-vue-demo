@@ -1,0 +1,56 @@
+{
+  "name": "Comment Helper",
+  "nameLocale": {
+    "en": "Comment Helper",
+    "zh": "批注助手"
+  },
+  "guid": "asc.{f5f9b730-91e0-4a8d-9cbe-28d2d0c7b701}",
+  "version": "1.0.0",
+  "author": "Demo",
+  "description": "Add a comment or dump all comments via JsAPI.",
+  "descriptionLocale": {
+    "zh": "通过 JsAPI 插入批注、获取批注列表"
+  },
+  "variations": [
+    {
+      "description": "Word editor buttons",
+      "isViewer": false,
+      "EditorsSupport": [
+        "word"
+      ],
+      "url": "plugin.js",
+      "icons": [
+        "resources/icon.svg",
+        "resources/icon.svg"
+      ],
+      "toolbar": [
+        {
+          "text": "批注助手",
+          "textLocale": {
+            "en": "Comment Helper",
+            "zh": "批注助手"
+          },
+          "items": [
+            {
+              "id": "addComment",
+              "text": "添加批注",
+              "textLocale": {
+                "en": "Add Comment",
+                "zh": "添加批注"
+              }
+            },
+            {
+              "id": "getComments",
+              "text": "获取批注列表",
+              "textLocale": {
+                "en": "Get Comments",
+                "zh": "获取批注列表"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+

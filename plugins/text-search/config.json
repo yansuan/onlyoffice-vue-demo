@@ -1,0 +1,54 @@
+{
+  "name": "Text Search",
+  "nameLocale": {
+    "en": "Text Search",
+    "zh": "文字搜索"
+  },
+  "guid": "asc.{a1b2c3d4-e5f6-7890-abcd-ef1234567890}",
+  "version": "1.0.0",
+  "author": "Demo",
+  "description": "Search text in document and locate its position.",
+  "descriptionLocale": {
+    "zh": "在文档中搜索文字并定位位置"
+  },
+  "variations": [
+    {
+      "description": "Word editor buttons",
+      "isViewer": false,
+      "EditorsSupport": ["word"],
+      "url": "plugin.js",
+      "icons": [
+        "resources/icon.svg",
+        "resources/icon.svg"
+      ],
+      "toolbar": [
+        {
+          "text": "文字搜索",
+          "textLocale": {
+            "en": "Text Search",
+            "zh": "文字搜索"
+          },
+          "items": [
+            {
+              "id": "searchText",
+              "text": "搜索文字",
+              "textLocale": {
+                "en": "Search Text",
+                "zh": "搜索文字"
+              }
+            },
+            {
+              "id": "findNext",
+              "text": "下一个",
+              "textLocale": {
+                "en": "Find Next",
+                "zh": "下一个"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+
