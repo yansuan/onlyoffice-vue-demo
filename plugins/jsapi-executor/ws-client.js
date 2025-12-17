@@ -736,9 +736,6 @@
               try {
                 const oDocument = Api.GetDocument();
 
-                // 先跳转到指定页面
-                oDocument.GoToPage(Asc.scope.targetPage - 1);
-
                 // 使用 Search 方法搜索文本
                 const oSearchResults = oDocument.Search(Asc.scope.searchText, false);
                 const pageResults = [];
@@ -768,6 +765,9 @@
                     error: `在第 ${Asc.scope.targetPage} 页未找到匹配的内容"${Asc.scope.searchText}"`
                   };
                 }
+
+                // 先跳转到指定页面
+                oDocument.GoToPage(Asc.scope.targetPage - 1);
 
                 // 高亮所有匹配项
                 for (let j = 0; j < pageResults.length; j++) {
@@ -836,9 +836,6 @@
               try {
                 const oDocument = Api.GetDocument();
 
-                // 先跳转到指定页面
-                oDocument.GoToPage(Asc.scope.navPageNumber - 1);
-
                 // 使用 Search 方法搜索文本
                 const oSearchResults = oDocument.Search(Asc.scope.navSearchText, false);
                 const pageResults = [];
@@ -864,6 +861,9 @@
                     error: `在第 ${Asc.scope.navPageNumber} 页未找到匹配的内容"${Asc.scope.navSearchText}"`
                   };
                 }
+
+                // 先跳转到指定页面
+                oDocument.GoToPage(Asc.scope.navPageNumber - 1);
 
                 // 高亮所有匹配项
                 for (let j = 0; j < pageResults.length; j++) {
@@ -987,6 +987,21 @@
           );
           break
 
+        case 'toggleNavigation':
+          // 切换导航面板显示/隐藏
+          console.log('[Plugin] toggleNavigation 开始执行, RequestId:', requestId);
+
+          window.Asc.plugin.executeMethod('ToggleLeftPanel', null, function (result) {
+            console.log('[Plugin] toggleNavigation 执行完成, RequestId:', requestId, 'result:', result);
+            if (result !== false) {
+              sendResult(requestId, 'success', {
+                message: '导航面板切换成功',
+                panelVisible: result
+              }, null);
+            }
+          });
+          break
+
         default:
           console.warn(
             '[Plugin] 收到未知命令, RequestId:',
@@ -1037,6 +1052,7 @@
   } else {
     // 如果文档已加载，立即初始化
     init()
+    //
   }
 
   // 暴露给全局，方便调试

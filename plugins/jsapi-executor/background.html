@@ -51,29 +51,41 @@
                 //     console.log("document preload");
                 // });
 
-                // 打开批注
-                window.Asc.plugin.executeMethod("OpenComments", []);
+                console.log("window.Asc.plugin.init");
 
-                //隐藏插件菜单
-                window.Asc.plugin.executeMethod("HidePluginMenu", []);
+                // window.Asc.plugin.executeMethod("ShowNavigationPane", [{
+                //     Show: true,
+                //     Tab: "headings"
+                // }]);
 
-                //隐藏菜单栏
-                window.Asc.plugin.executeMethod("HideMenuBar", []);
 
-                //隐藏工具栏
-                window.Asc.plugin.executeMethod("HideToolBar", []);
+                //是否能获取到id为left-btn-navigation的对象，然后点击;当前页面是在一个iframe中的，left-btn-navigation是在父窗口中
+                // console.log(window.parent.document.getElementById("left-btn-navigation"))
+                window.parent.document.getElementById("left-btn-navigation").click();
 
-                //隐藏状态栏
-                window.Asc.plugin.executeMethod("HideStatusBar", []);
+                // // 打开批注
+                // window.Asc.plugin.executeMethod("OpenComments", []);
 
-                //隐藏工具栏按钮
-                window.Asc.plugin.executeMethod("HideToolBarButton", []);
+                // //隐藏插件菜单
+                // window.Asc.plugin.executeMethod("HidePluginMenu", []);
 
-                //隐藏状态栏按钮
-                window.Asc.plugin.executeMethod("HideStatusBarButton", []);
+                // //隐藏菜单栏
+                // window.Asc.plugin.executeMethod("HideMenuBar", []);
 
-                //隐藏菜单栏按钮
-                window.Asc.plugin.executeMethod("HideMenuBarButton", []);
+                // //隐藏工具栏
+                // window.Asc.plugin.executeMethod("HideToolBar", []);
+
+                // //隐藏状态栏
+                // window.Asc.plugin.executeMethod("HideStatusBar", []);
+
+                // //隐藏工具栏按钮
+                // window.Asc.plugin.executeMethod("HideToolBarButton", []);
+
+                // //隐藏状态栏按钮
+                // window.Asc.plugin.executeMethod("HideStatusBarButton", []);
+
+                // //隐藏菜单栏按钮
+                // window.Asc.plugin.executeMethod("HideMenuBarButton", []);
             }
         })(window, undefined);
 

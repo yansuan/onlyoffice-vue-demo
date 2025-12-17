@@ -53,19 +53,20 @@
         </div> -->
       </div>
       <div class="panel-content">
-        <!-- 快速操作 -->
+        <!-- 快速操作
         <div class="section">
           <h4>快速操作</h4>
           <div class="input-group">
             <input v-model="quickText" type="text" placeholder="输入要插入的文本" class="input" />
             <button @click="handleInsertText" class="btn btn-primary">插入文本</button>
           </div>
+
           <div class="input-group">
             <input v-model="searchText" type="text" placeholder="输入要搜索的文本" class="input" />
             <button @click="handleSearchText" class="btn btn-primary">搜索文本</button>
           </div>
         </div>
-
+ -->
         <!-- 批注操作 -->
         <div class="section">
           <h4>批注操作</h4>
@@ -95,7 +96,7 @@
 
         <!-- 页面导航 -->
         <div class="section">
-          <h4>页面导航与搜索</h4>
+          <h4>高亮</h4>
           <div class="input-group">
             <input
               v-model.number="pageNumber"
@@ -105,7 +106,7 @@
               class="input"
               @keyup.enter="handleScrollToPage"
             />
-            <button @click="handleScrollToPage" class="btn btn-primary">跳转到页</button>
+            <!-- <button @click="handleScrollToPage" class="btn btn-primary">跳转到页</button> -->
           </div>
           <div class="input-group" style="margin-top: 8px">
             <input
@@ -115,9 +116,9 @@
               class="input"
               @keyup.enter="handleSearchAndNavigate"
             />
-            <button @click="handleSearchAndNavigate" class="btn btn-primary">搜索并跳转</button>
           </div>
           <div style="margin-top: 8px">
+            <button @click="handleSearchAndNavigate" class="btn btn-primary">搜索并高亮</button>
             <button @click="handleClearHighlights" class="btn btn-warning">清除高亮</button>
           </div>
           <!-- 搜索结果显示 -->
@@ -238,6 +239,16 @@ const baseConfig = {
       css: `
           .tabs { display: none !important; }
           .header { display: none !important; }
+          /* 默认打开左侧导航面板 */
+          .asc-window.left-panel { display: block !important; }
+          .asc-window-content.left-panel-open { margin-left: 300px !important; }
+          .left-panel { width: 300px !important; display: block !important; }
+          .left-panel .panel { display: block !important; }
+          .left-panel .navigation { display: block !important; }
+          .left-panel .headings { display: block !important; }
+          /* 强制显示导航面板内容 */
+          #left-panel-navigation { display: block !important; }
+          .navigation-panel { display: block !important; }
           /* 其他样式 */
         `,
     },
@@ -362,7 +373,7 @@ export default defineComponent({
       commentText: '',
       selectionCommentText: '',
       pageNumber: 5,
-      pageSearchText: '',
+      pageSearchText: '对象代表查找操作的执行条件',
       searchResults: [] as Array<{ text: string; page: number; index: number }>,
       lastResult: null as unknown | null,
     }
@@ -441,6 +452,11 @@ export default defineComponent({
     },
     onDocumentReady() {
       console.log('Document is loaded')
+
+      // 文档加载完成后，自动打开导航面板（标题列表）
+      setTimeout(() => {
+        this.openNavigationPanel()
+      }, 1000) // 延迟1秒确保编辑器完全加载
     },
     onLoadComponentError(errorCode: number, errorDescription: string) {
       console.error(`Editor load error ${errorCode}: ${errorDescription}`)
@@ -1074,6 +1090,8 @@ export default defineComponent({
   font-size: 13px;
   cursor: pointer;
   white-space: nowrap;
+  margin-left: 8px;
+  margin-right: 8px;
 }
 
 .btn-primary {
