@@ -1,15 +1,3 @@
-docker run -i -t -d \
-  -p 8101:80 \
-  --restart=always \
-  -e JWT_ENABLED=true \
-  -e JWT_SECRET=+keng2vx4V2ei1k/2wAsbxjpNP/v6Ew7uhyaJ9hgOr4= \
-  -e JWT_HEADER=Authorization \
-  --name documentserver \
-  onlyoffice/documentserver
-
-docker cp documentserver:/etc/onlyoffice/documentserver /opt/onlyoffice/etc
-docker cp documentserver:/var/www/onlyoffice/documentserver/sdkjs-plugins /opt/onlyoffice/plugins
-
 docker rm documentserver -f
 
 docker run -d \

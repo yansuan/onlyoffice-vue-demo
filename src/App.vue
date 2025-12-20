@@ -452,11 +452,6 @@ export default defineComponent({
     },
     onDocumentReady() {
       console.log('Document is loaded')
-
-      // 文档加载完成后，自动打开导航面板（标题列表）
-      setTimeout(() => {
-        this.openNavigationPanel()
-      }, 1000) // 延迟1秒确保编辑器完全加载
     },
     onLoadComponentError(errorCode: number, errorDescription: string) {
       console.error(`Editor load error ${errorCode}: ${errorDescription}`)
