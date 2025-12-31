@@ -27,40 +27,12 @@
     <script>
         (function (window, undefined) {
             window.Asc.plugin.init = function () {
-                // window.Asc.plugin.callCommand(() => {
-                //     var doc = Api.GetDocument()
-                //     var paragraphs = doc.GetAllParagraphs()
-                //     var results = []
-                //     for (var i = 0; i < paragraphs.length; i++) {
-
-                //         const p = paragraphs[i];
-
-                //         var range = p.GetRange()
-                //         console.log("paragraph:", i, {
-                //             index: i,
-                //             page: range ? range.GetStartPage() + 1 : null
-                //         })
-                //     }
-                // }, false, false, () => {
-                //     console.log("get paragraphs")
-                // })
-
-                // window.Asc.plugin.callCommand(() => {
-                //     const doc = Api.GetDocument()
-                //     const oSearchResults = doc.Search("text", false)
-                //     console.log("document preload");
-                // });
 
                 console.log("window.Asc.plugin.init");
 
-                // window.Asc.plugin.executeMethod("ShowNavigationPane", [{
-                //     Show: true,
-                //     Tab: "headings"
-                // }]);
+                const info = window.Asc.plugin.info;
+                console.log(info);
 
-
-                //是否能获取到id为left-btn-navigation的对象，然后点击;当前页面是在一个iframe中的，left-btn-navigation是在父窗口中
-                // console.log(window.parent.document.getElementById("left-btn-navigation"))
                 window.parent.document.getElementById("left-btn-navigation").click();
 
                 // // 打开批注
@@ -88,7 +60,6 @@
                 // window.Asc.plugin.executeMethod("HideMenuBarButton", []);
             }
         })(window, undefined);
-
 
         // 确保插件环境就绪后初始化 WebSocket
         if (window.Asc && window.Asc.plugin) {

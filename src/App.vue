@@ -290,6 +290,15 @@ const baseConfig = {
       hoverMode: false,
     },
   },
+  customParams: {
+    /*自定义数据*/
+        businessData: {
+            documentId: "doc_12345",
+            projectId: "project_67890",
+            workflowStep: "review",
+            priority: "high"
+        },
+      }
 }
 
 const base64Url = (word: CryptoWordArray | string) =>
