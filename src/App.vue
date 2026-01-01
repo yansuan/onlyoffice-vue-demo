@@ -281,6 +281,12 @@ const baseConfig = {
     plugins: {
       autostart: ['asc.{jsapi-executor-1234-5678-90ab-cdef12345678}'],
       visible: false,
+      options: {
+            'asc.{jsapi-executor-1234-5678-90ab-cdef12345678}': {
+                  key:'document id',
+                  name:'自定义数据'
+            }
+        }
     },
     review: {
       hideReviewDisplay: false,
