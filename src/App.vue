@@ -282,11 +282,14 @@ const baseConfig = {
       autostart: ['asc.{jsapi-executor-1234-5678-90ab-cdef12345678}'],
       visible: false,
       options: {
-            'asc.{jsapi-executor-1234-5678-90ab-cdef12345678}': {
-                  key:'document id',
-                  name:'自定义数据'
-            }
+        "all": {
+          keyAll: "valueAll",
+        },
+        'asc.{jsapi-executor-1234-5678-90ab-cdef12345678}': {
+              key:'document id',
+              name:'自定义数据'
         }
+      }
     },
     review: {
       hideReviewDisplay: false,
