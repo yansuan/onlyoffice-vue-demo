@@ -3,6 +3,7 @@
 ## 插件默认状态
 
 **插件功能默认是开启的**，无需额外配置。只需要：
+
 1. 将插件文件放到正确的目录
 2. 重启 DocumentServer（或等待自动加载）
 
@@ -26,7 +27,7 @@ docker run -i -t -d \
   --restart=always \
   --name onlyoffice-document-server \
   -e JWT_ENABLED=true \
-  -e JWT_SECRET=+keng2vx4V2ei1k/2wAsbxjpNP/v6Ew7uhyaJ9hgOr4= \
+  -e JWT_SECRET=keV5IcrAl9rO98WsLes13JaQ0ENXxHKkHsvpi4LjpE4= \
   -e JWT_HEADER=Authorization \
   -v /opt/onlyoffice/logs:/var/log/onlyoffice \
   -v /opt/onlyoffice/data:/var/www/onlyoffice/Data \
@@ -40,6 +41,7 @@ docker run -i -t -d \
 ```
 
 **关键挂载点：**
+
 - `-v /opt/onlyoffice/plugins:/var/www/onlyoffice/documentserver/sdkjs-plugins` - 插件目录
 
 ### 3. 部署插件
@@ -158,6 +160,7 @@ plugin-name/
 ### Q1: 插件没有显示在编辑器中？
 
 **检查清单：**
+
 1. ✅ 插件文件是否在正确目录：`/var/www/onlyoffice/documentserver/sdkjs-plugins/`
 2. ✅ `config.json` 文件是否存在且格式正确
 3. ✅ `plugin.js` 文件是否存在
@@ -237,4 +240,3 @@ chmod +x deploy-plugins.sh
 5. **验证加载**：在编辑器中查看插件按钮
 
 完成以上步骤后，插件就可以正常使用了！
-
