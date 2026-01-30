@@ -180,7 +180,7 @@ type EditorInstance = {
   [key: string]: any
 }
 
-const ONLY_OFFICE_SECRET = '+keng2vx4V2ei1k/2wAsbxjpNP/v6Ew7uhyaJ9hgOr4='
+const ONLY_OFFICE_SECRET = 'keV5IcrAl9rO98WsLes13JaQ0ENXxHKkHsvpi4LjpE4='
 
 const baseConfig = {
   document: {
