@@ -15,7 +15,7 @@
     "type-check": "vue-tsc --build",
     "lint": "eslint . --fix --cache",
     "format": "prettier --write --experimental-cli src/",
-    "callback-server": "node server/callback-server.js",
+    "callback-server": "node --env-file=.env server/callback-server.js",
     "start": "run-p dev callback-server"
   },
   "dependencies": {

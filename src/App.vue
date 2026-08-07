@@ -31,7 +31,7 @@
         v-if="config"
         ref="docEditor"
         id="docEditor"
-        documentServerUrl="http://192.168.93.128:8101"
+        :documentServerUrl="documentServerUrl"
         :config="config"
         :events_onAppReady="onAppReady"
         :events_onDocumentReady="onDocumentReady"
@@ -180,7 +180,10 @@ type EditorInstance = {
   [key: string]: any
 }
 
-const ONLY_OFFICE_SECRET = 'keV5IcrAl9rO98WsLes13JaQ0ENXxHKkHsvpi4LjpE4='
+const DOCUMENT_SERVER_URL = import.meta.env.VITE_DOCUMENT_SERVER_URL
+const CALLBACK_BASE_URL = import.meta.env.VITE_CALLBACK_BASE_URL
+const ONLY_OFFICE_SECRET = import.meta.env.VITE_ONLYOFFICE_JWT_SECRET
+const DOCUMENT_PATH = import.meta.env.VITE_DOCUMENT_PATH
 
 const baseConfig = {
   document: {
@@ -188,7 +191,7 @@ const baseConfig = {
     // key 在 buildConfigWithToken 中动态生成，避免版本冲突提示
     title: 'OnlyOffice Vue Demo.docx',
     // 加载自动保存文件（demo_autosave.docx），自动保存会持续更新此文件
-    url: 'http://192.168.93.1:4000/files/demo.docx',
+    url: `${CALLBACK_BASE_URL}${DOCUMENT_PATH}`,
     permissions: {
       edit: true,
       review: false,
@@ -207,7 +210,7 @@ const baseConfig = {
   documentType: 'word',
   editorConfig: {
     lang: 'zh',
-    callbackUrl: 'http://192.168.93.1:4000/onlyoffice/callback',
+    callbackUrl: `${CALLBACK_BASE_URL}/onlyoffice/callback`,
     mode: 'edit',
     trackChanges: true,
     showReviewChanges: true,
@@ -376,6 +379,7 @@ export default defineComponent({
   components: { DocumentEditor },
   data() {
     return {
+      documentServerUrl: DOCUMENT_SERVER_URL,
       config: null as null | ReturnType<typeof buildConfigWithToken>,
       currentMode: 'edit' as 'edit' | 'review' | 'view',
       editorInstance: null as EditorInstance | null,
@@ -578,7 +582,7 @@ export default defineComponent({
     },
     // WebSocket 相关方法
     initWebSocket() {
-      const wsUrl = 'ws://192.168.93.1:4000?type=vue'
+      const wsUrl = `${CALLBACK_BASE_URL.replace(/^http/, 'ws')}?type=vue`
       try {
         this.ws = new WebSocket(wsUrl)
 
@@ -888,7 +892,7 @@ export default defineComponent({
         console.log('[手动保存] 文档 key:', documentKey)
 
         // 通过后端 API 调用 forcesave（避免 CORS 问题）
-        const response = await fetch('http://192.168.93.1:4000/api/forcesave', {
+        const response = await fetch(`${CALLBACK_BASE_URL}/api/forcesave`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

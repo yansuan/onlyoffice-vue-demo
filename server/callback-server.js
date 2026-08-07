@@ -7,7 +7,10 @@ import { createServer } from 'http'
 import { WebSocketServer } from 'ws'
 
 const app = express()
-const PORT = process.env.ONLYOFFICE_CALLBACK_PORT || 4000
+const DOCUMENT_SERVER_URL =
+  process.env.VITE_DOCUMENT_SERVER_URL || 'http://192.168.93.128:8101'
+const CALLBACK_BASE_URL = process.env.VITE_CALLBACK_BASE_URL || 'http://192.168.93.1:4000'
+const PORT = Number(new URL(CALLBACK_BASE_URL).port) || 4000
 
 // 计算当前文件所在目录，方便配置静态文件目录
 const __filename = fileURLToPath(import.meta.url)
@@ -158,7 +161,7 @@ app.post('/api/forcesave', async (req, res) => {
     }
 
     // 调用 OnlyOffice Command Service API
-    const commandServiceUrl = 'http://192.168.93.128:8101/coauthoring/CommandService.ashx'
+    const commandServiceUrl = `${DOCUMENT_SERVER_URL}/coauthoring/CommandService.ashx`
 
     const commandPayload = {
       c: 'forcesave',
