@@ -21,9 +21,13 @@ Document Server 参考：
 
 ## 构建镜像
 
-在项目根目录执行：
+在项目根目录执行（默认使用 npmmirror，避免 registry.npmjs.org 超时）：
 
   docker build -t onlyoffice-vue-demo:latest .
+
+如需官方源：
+
+  docker build --build-arg NPM_REGISTRY=https://registry.npmjs.org/ -t onlyoffice-vue-demo:latest .
 
 ## 启动（用 -e 覆盖 .env 同名参数）
 
@@ -34,8 +38,8 @@ Document Server 参考：
   docker run -d \
     --name onlyoffice-vue-demo \
     -p 19102:4000 \
-    -e VITE_DOCUMENT_SERVER_URL=http://192.168.93.128:19101 \
-    -e VITE_CALLBACK_BASE_URL=http://192.168.93.1:19102 \
+    -e VITE_DOCUMENT_SERVER_URL=http://121.41.239.31:19101 \
+    -e VITE_CALLBACK_BASE_URL=http://121.41.239.31:19102 \
     -e VITE_ONLYOFFICE_JWT_SECRET=+keng2vx4V2ei1k/2wAsbxjpNP/v6Ew7uhyaJ9hgOr4= \
     -e VITE_DOCUMENT_PATH=/files/demo.docx \
     onlyoffice-vue-demo:latest
