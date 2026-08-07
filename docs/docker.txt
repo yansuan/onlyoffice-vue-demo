@@ -9,6 +9,17 @@ docker run -d \
   -e JWT_HEADER=Authorization \
   onlyoffice/documentserver
 
+docker run -d \
+  --name documentserver \
+  -p 19101:80 \
+  --restart always \
+  -e JWT_ENABLED=true \
+  -e JWT_SECRET=+keng2vx4V2ei1k/2wAsbxjpNP/v6Ew7uhyaJ9hgOr4= \
+  -e JWT_HEADER=Authorization \
+  -e CORS_ENABLED=true \
+  -e CORS_ALLOWED_ORIGINS=* \
+  onlyoffice/documentserver:latest
+
 
 docker exec documentserver rm -rf /var/www/onlyoffice/documentserver/sdkjs-plugins/jsapi-executor
 docker cp jsapi-executor documentserver:/var/www/onlyoffice/documentserver/sdkjs-plugins

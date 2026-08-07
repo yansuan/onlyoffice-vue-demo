@@ -16,7 +16,9 @@
     "lint": "eslint . --fix --cache",
     "format": "prettier --write --experimental-cli src/",
     "callback-server": "node --env-file=.env server/callback-server.js",
-    "start": "run-p dev callback-server"
+    "start": "run-p dev callback-server",
+    "docker:build": "docker build -t onlyoffice-vue-demo:latest .",
+    "docker:install": "powershell -ExecutionPolicy Bypass -File ./scripts/docker-install.ps1"
   },
   "dependencies": {
     "@onlyoffice/document-editor-vue": "^1.6.1",

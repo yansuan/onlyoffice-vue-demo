@@ -1,0 +1,70 @@
+# OnlyOffice Vue Demo — 应用镜像安装说明（不含 Document Server）
+# Document Server 按 docs/docker.txt（端口 19101）单独启动。
+
+## 前置
+1. 已安装 Docker
+2. 已按 docs/docker.txt 启动 Document Server（-p 19101:80，JWT_SECRET 如下）
+3. 浏览器、Document Server、本容器能互相访问下面配置的 URL
+
+Document Server 参考：
+
+  docker run -d \
+    --name documentserver \
+    -p 19101:80 \
+    --restart always \
+    -e JWT_ENABLED=true \
+    -e JWT_SECRET=+keng2vx4V2ei1k/2wAsbxjpNP/v6Ew7uhyaJ9hgOr4= \
+    -e JWT_HEADER=Authorization \
+    -e CORS_ENABLED=true \
+    -e CORS_ALLOWED_ORIGINS=* \
+    onlyoffice/documentserver:latest
+
+## 构建镜像
+
+在项目根目录执行：
+
+  docker build -t onlyoffice-vue-demo:latest .
+
+## 启动（用 -e 覆盖 .env 同名参数）
+
+容器内固定监听 4000，对外用 -p 映射到 19102。
+
+  docker rm -f onlyoffice-vue-demo 2>/dev/null || true
+
+  docker run -d \
+    --name onlyoffice-vue-demo \
+    -p 19102:4000 \
+    -e VITE_DOCUMENT_SERVER_URL=http://192.168.93.128:19101 \
+    -e VITE_CALLBACK_BASE_URL=http://192.168.93.1:19102 \
+    -e VITE_ONLYOFFICE_JWT_SECRET=+keng2vx4V2ei1k/2wAsbxjpNP/v6Ew7uhyaJ9hgOr4= \
+    -e VITE_DOCUMENT_PATH=/files/demo.docx \
+    onlyoffice-vue-demo:latest
+
+## 可覆盖的环境变量（与 .env 一致）
+
+  VITE_DOCUMENT_SERVER_URL   Document Server 地址（浏览器可访问），默认 :19101
+  VITE_CALLBACK_BASE_URL     本应用对外地址（浏览器与 Document Server 可访问），默认 :19102
+  VITE_ONLYOFFICE_JWT_SECRET JWT 密钥（须与 Document Server JWT_SECRET 相同）
+  VITE_DOCUMENT_PATH         演示文档路径，默认 /files/demo.docx
+
+说明：前端通过 /config.js 在运行时读取上述变量，修改 -e 后重启容器即可生效，无需重新 build。
+容器内端口固定 4000，对外端口只改 -p 左侧即可（同时改 VITE_CALLBACK_BASE_URL 中的端口）。
+
+## 访问
+
+  前端:   http://<主机IP>:19102/
+  文档:   http://<主机IP>:19102/files/demo.docx
+  回调:   http://<主机IP>:19102/onlyoffice/callback
+  配置:   http://<主机IP>:19102/config.js
+  DS:     http://<主机IP>:19101/
+
+## 常用命令
+
+  docker logs -f onlyoffice-vue-demo
+  docker restart onlyoffice-vue-demo
+  docker rm -f onlyoffice-vue-demo
+
+## 一键脚本（可选）
+
+  PowerShell:  .\scripts\docker-install.ps1
+  Bash:        ./scripts/docker-install.sh

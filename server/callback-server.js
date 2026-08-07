@@ -8,9 +8,14 @@ import { WebSocketServer } from 'ws'
 
 const app = express()
 const DOCUMENT_SERVER_URL =
-  process.env.VITE_DOCUMENT_SERVER_URL || 'http://192.168.93.128:8101'
-const CALLBACK_BASE_URL = process.env.VITE_CALLBACK_BASE_URL || 'http://192.168.93.1:4000'
-const PORT = Number(new URL(CALLBACK_BASE_URL).port) || 4000
+  process.env.VITE_DOCUMENT_SERVER_URL || 'http://192.168.93.128:19101'
+const CALLBACK_BASE_URL = process.env.VITE_CALLBACK_BASE_URL || 'http://192.168.93.1:19102'
+const DOCUMENT_PATH = process.env.VITE_DOCUMENT_PATH || '/files/demo.docx'
+const JWT_SECRET = process.env.VITE_ONLYOFFICE_JWT_SECRET || ''
+const PORT = Number(process.env.PORT) || 4000
+const STATIC_DIR = process.env.STATIC_DIR
+  ? path.resolve(process.env.STATIC_DIR)
+  : path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../dist')
 
 // 计算当前文件所在目录，方便配置静态文件目录
 const __filename = fileURLToPath(import.meta.url)
@@ -37,8 +42,22 @@ if (!fs.existsSync(LATEST_FILE) && fs.existsSync(ORIGINAL_FILE)) {
 app.use(express.json({ limit: '100mb' }))
 app.use(express.urlencoded({ extended: true }))
 
+// Runtime config for frontend (supports docker run -e overrides)
+app.get('/config.js', (_req, res) => {
+  const runtimeConfig = {
+    VITE_DOCUMENT_SERVER_URL: DOCUMENT_SERVER_URL,
+    VITE_CALLBACK_BASE_URL: CALLBACK_BASE_URL,
+    VITE_ONLYOFFICE_JWT_SECRET: JWT_SECRET,
+    VITE_DOCUMENT_PATH: DOCUMENT_PATH,
+  }
+  res
+    .type('application/javascript')
+    .set('Cache-Control', 'no-store')
+    .send(`window.__APP_CONFIG__ = ${JSON.stringify(runtimeConfig)};`)
+})
+
 // 提供 demo.docx 的 HTTP 访问地址，例如：
-// http://localhost:4000/files/demo.docx
+// http://localhost:19102/files/demo.docx
 app.use('/files', express.static(FILES_DIR))
 
 // API: 接收文档内容并保存为文本文件
@@ -418,6 +437,24 @@ app.post('/onlyoffice/callback', async (req, res) => {
   return res.json({ error: 0 })
 })
 
+// Serve built frontend (Docker / production). /config.js route above takes precedence.
+if (fs.existsSync(STATIC_DIR)) {
+  app.use(express.static(STATIC_DIR))
+  app.get('*', (req, res, next) => {
+    if (
+      req.path.startsWith('/api/') ||
+      req.path.startsWith('/files/') ||
+      req.path.startsWith('/onlyoffice/') ||
+      req.path === '/config.js'
+    ) {
+      return next()
+    }
+    res.sendFile(path.join(STATIC_DIR, 'index.html'), (err) => {
+      if (err) next(err)
+    })
+  })
+}
+
 // 创建 HTTP 服务器
 const server = createServer(app)
 
@@ -491,10 +528,15 @@ wss.on('connection', (ws, req) => {
   }))
 })
 
-server.listen(PORT, () => {
-  console.log(`[ONLYOFFICE] Callback demo server listening on http://localhost:${PORT}`)
-  console.log(`[WebSocket] WebSocket server listening on ws://localhost:${PORT}`)
+server.listen(PORT, '0.0.0.0', () => {
+  console.log(`[ONLYOFFICE] Callback demo server listening on http://0.0.0.0:${PORT}`)
+  console.log(`[WebSocket] WebSocket server listening on ws://0.0.0.0:${PORT}`)
+  console.log(`[ONLYOFFICE] Document Server: ${DOCUMENT_SERVER_URL}`)
+  console.log(`[ONLYOFFICE] Callback base URL: ${CALLBACK_BASE_URL}`)
   console.log('[ONLYOFFICE] Static files served from /files/, e.g. /files/demo.docx')
+  if (fs.existsSync(STATIC_DIR)) {
+    console.log(`[ONLYOFFICE] Frontend static files served from ${STATIC_DIR}`)
+  }
   console.log('[ONLYOFFICE] All callbacks return {"error":0} and do NOT persist files.')
 })
 

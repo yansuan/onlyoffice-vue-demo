@@ -156,6 +156,7 @@
 import { defineComponent } from 'vue'
 import { DocumentEditor } from '@onlyoffice/document-editor-vue'
 import CryptoJS from 'crypto-js'
+import { getAppConfig } from './config'
 
 type CryptoWordArray = CryptoJS.lib.WordArray
 type HistoryVersion = {
@@ -180,18 +181,17 @@ type EditorInstance = {
   [key: string]: any
 }
 
-const DOCUMENT_SERVER_URL = import.meta.env.VITE_DOCUMENT_SERVER_URL
-const CALLBACK_BASE_URL = import.meta.env.VITE_CALLBACK_BASE_URL
-const ONLY_OFFICE_SECRET = import.meta.env.VITE_ONLYOFFICE_JWT_SECRET
-const DOCUMENT_PATH = import.meta.env.VITE_DOCUMENT_PATH
+const getEnv = () => getAppConfig()
 
-const baseConfig = {
+const buildBaseConfig = () => {
+  const { callbackBaseUrl, documentPath } = getEnv()
+  return {
   document: {
     fileType: 'docx',
     // key 在 buildConfigWithToken 中动态生成，避免版本冲突提示
     title: 'OnlyOffice Vue Demo.docx',
     // 加载自动保存文件（demo_autosave.docx），自动保存会持续更新此文件
-    url: `${CALLBACK_BASE_URL}${DOCUMENT_PATH}`,
+    url: `${callbackBaseUrl}${documentPath}`,
     permissions: {
       edit: true,
       review: false,
@@ -210,7 +210,7 @@ const baseConfig = {
   documentType: 'word',
   editorConfig: {
     lang: 'zh',
-    callbackUrl: `${CALLBACK_BASE_URL}/onlyoffice/callback`,
+    callbackUrl: `${callbackBaseUrl}/onlyoffice/callback`,
     mode: 'edit',
     trackChanges: true,
     showReviewChanges: true,
@@ -312,6 +312,9 @@ const baseConfig = {
         },
       }
 }
+}
+
+let baseConfig = buildBaseConfig()
 
 const base64Url = (word: CryptoWordArray | string) =>
   CryptoJS.enc.Base64.stringify(typeof word === 'string' ? CryptoJS.enc.Utf8.parse(word) : word)
@@ -331,13 +334,17 @@ const buildToken = (config: { document: unknown; documentType: string; editorCon
   const headerEncoded = base64Url(JSON.stringify(header))
   const payloadEncoded = base64Url(JSON.stringify(payload))
   const signature = base64Url(
-    CryptoJS.HmacSHA256(`${headerEncoded}.${payloadEncoded}`, ONLY_OFFICE_SECRET),
+    CryptoJS.HmacSHA256(`${headerEncoded}.${payloadEncoded}`, getEnv().jwtSecret),
   )
 
   return `${headerEncoded}.${payloadEncoded}.${signature}`
 }
 
 const buildConfigWithToken = () => {
+  const { callbackBaseUrl, documentPath } = getEnv()
+  baseConfig.document.url = `${callbackBaseUrl}${documentPath}`
+  baseConfig.editorConfig.callbackUrl = `${callbackBaseUrl}/onlyoffice/callback`
+
   // 使用时间戳生成动态 key，每次打开都是新的编辑会话
   const timestamp = Date.now()
   const documentKey = `vue-demo-doc-${timestamp}`
@@ -379,7 +386,7 @@ export default defineComponent({
   components: { DocumentEditor },
   data() {
     return {
-      documentServerUrl: DOCUMENT_SERVER_URL,
+      documentServerUrl: getEnv().documentServerUrl,
       config: null as null | ReturnType<typeof buildConfigWithToken>,
       currentMode: 'edit' as 'edit' | 'review' | 'view',
       editorInstance: null as EditorInstance | null,
@@ -582,7 +589,7 @@ export default defineComponent({
     },
     // WebSocket 相关方法
     initWebSocket() {
-      const wsUrl = `${CALLBACK_BASE_URL.replace(/^http/, 'ws')}?type=vue`
+      const wsUrl = `${getEnv().callbackBaseUrl.replace(/^http/, 'ws')}?type=vue`
       try {
         this.ws = new WebSocket(wsUrl)
 
@@ -892,7 +899,7 @@ export default defineComponent({
         console.log('[手动保存] 文档 key:', documentKey)
 
         // 通过后端 API 调用 forcesave（避免 CORS 问题）
-        const response = await fetch(`${CALLBACK_BASE_URL}/api/forcesave`, {
+        const response = await fetch(`${getEnv().callbackBaseUrl}/api/forcesave`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
