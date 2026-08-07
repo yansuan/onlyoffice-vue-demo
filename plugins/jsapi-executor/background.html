@@ -31,9 +31,17 @@
                 console.log("window.Asc.plugin.init");
 
                 const info = window.Asc.plugin.info;
-                console.log(info);
+                console.log('[Plugin] info (含 plugins.options):', info);
 
                 window.parent.document.getElementById("left-btn-navigation").click();
+
+                // 等 options 注入到 info 后再连 WebSocket
+                if (window.WSClient && typeof window.WSClient.connect === 'function') {
+                    console.log('[Plugin] 启动 WebSocket，配置:', window.WSClient.getPluginConfig());
+                    window.WSClient.connect();
+                } else {
+                    console.error('[Plugin] WSClient 未就绪，无法连接 WebSocket');
+                }
 
                 // // 打开批注
                 // window.Asc.plugin.executeMethod("OpenComments", []);
@@ -61,14 +69,13 @@
             }
         })(window, undefined);
 
-        // 确保插件环境就绪后初始化 WebSocket
+        // 确保插件环境就绪
         if (window.Asc && window.Asc.plugin) {
-            console.log('[JsAPI Executor] 后台插件已启动，等待 WebSocket 连接...');
+            console.log('[JsAPI Executor] 后台插件已启动，等待 Asc.plugin.init...');
         } else {
-            // 如果插件环境未就绪，等待一下
             setTimeout(function () {
                 if (window.Asc && window.Asc.plugin) {
-                    console.log('[JsAPI Executor] 后台插件已启动，等待 WebSocket 连接...');
+                    console.log('[JsAPI Executor] 后台插件已启动，等待 Asc.plugin.init...');
                 }
             }, 100);
         }

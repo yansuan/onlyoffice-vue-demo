@@ -5,6 +5,7 @@ param(
   [int]$Port = 19102,
   [string]$DocumentServerUrl = "http://192.168.93.128:19101",
   [string]$CallbackBaseUrl = "http://192.168.93.1:19102",
+  [string]$WsBaseUrl = "ws://192.168.93.1:19102",
   [string]$JwtSecret = "+keng2vx4V2ei1k/2wAsbxjpNP/v6Ew7uhyaJ9hgOr4=",
   [string]$DocumentPath = "/files/demo.docx"
 )
@@ -23,6 +24,7 @@ docker run -d `
   -p "${Port}:4000" `
   -e "VITE_DOCUMENT_SERVER_URL=$DocumentServerUrl" `
   -e "VITE_CALLBACK_BASE_URL=$CallbackBaseUrl" `
+  -e "VITE_WS_BASE_URL=$WsBaseUrl" `
   -e "VITE_ONLYOFFICE_JWT_SECRET=$JwtSecret" `
   -e "VITE_DOCUMENT_PATH=$DocumentPath" `
   $Image

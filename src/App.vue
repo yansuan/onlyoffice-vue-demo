@@ -156,7 +156,7 @@
 import { defineComponent } from 'vue'
 import { DocumentEditor } from '@onlyoffice/document-editor-vue'
 import CryptoJS from 'crypto-js'
-import { getAppConfig } from './config'
+import { getAppConfig, buildWsUrl } from './config'
 
 type CryptoWordArray = CryptoJS.lib.WordArray
 type HistoryVersion = {
@@ -284,15 +284,28 @@ const buildBaseConfig = () => {
     plugins: {
       autostart: ['asc.{jsapi-executor-1234-5678-90ab-cdef12345678}'],
       visible: false,
-      options: {
-        "all": {
-          keyAll: "valueAll",
-        },
-        'asc.{jsapi-executor-1234-5678-90ab-cdef12345678}': {
-              key:'document id',
-              name:'自定义数据'
+      options: (() => {
+        const { callbackBaseUrl, documentServerUrl, wsBaseUrl } = getEnv()
+        const pluginGuid = 'asc.{jsapi-executor-1234-5678-90ab-cdef12345678}'
+        const wsUrl = buildWsUrl('plugin', wsBaseUrl)
+        const shared = {
+          callbackBaseUrl,
+          documentServerUrl,
+          wsBaseUrl,
+          wsUrl,
         }
-      }
+        return {
+          all: {
+            keyAll: 'valueAll',
+            ...shared,
+          },
+          [pluginGuid]: {
+            key: 'document id',
+            name: '自定义数据',
+            ...shared,
+          },
+        }
+      })(),
     },
     review: {
       hideReviewDisplay: false,
@@ -589,7 +602,7 @@ export default defineComponent({
     },
     // WebSocket 相关方法
     initWebSocket() {
-      const wsUrl = `${getEnv().callbackBaseUrl.replace(/^http/, 'ws')}?type=vue`
+      const wsUrl = buildWsUrl('vue')
       try {
         this.ws = new WebSocket(wsUrl)
 

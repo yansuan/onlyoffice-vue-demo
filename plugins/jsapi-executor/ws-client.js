@@ -5,13 +5,46 @@
   let ws = null
   let reconnectTimer = null
   const handledRequests = new Set()
-  const WS_URL = 'ws://192.168.93.1:4000?type=plugin'
   const RECONNECT_DELAY = 3000
+  const DEFAULT_CALLBACK_BASE_URL = 'http://192.168.93.1:19102'
+  const DEFAULT_DOCUMENT_SERVER_URL = 'http://192.168.93.128:19101'
+  const DEFAULT_WS_BASE_URL = 'ws://192.168.93.1:19102'
+
+  // 从 editorConfig.plugins.options 注入到 Asc.plugin.info 的运行时配置
+  function getPluginConfig() {
+    const info = (window.Asc && window.Asc.plugin && window.Asc.plugin.info) || {}
+    const callbackBaseUrl = info.callbackBaseUrl || DEFAULT_CALLBACK_BASE_URL
+    const documentServerUrl = info.documentServerUrl || DEFAULT_DOCUMENT_SERVER_URL
+    const wsBaseUrl = info.wsBaseUrl || DEFAULT_WS_BASE_URL
+    let wsUrl = info.wsUrl || ''
+    if (!wsUrl && wsBaseUrl) {
+      wsUrl = wsBaseUrl.replace(/\/$/, '').replace(/\?.*$/, '') + '?type=plugin'
+    }
+    if (!wsUrl) {
+      wsUrl = DEFAULT_WS_BASE_URL + '?type=plugin'
+    }
+    return {
+      callbackBaseUrl: callbackBaseUrl,
+      documentServerUrl: documentServerUrl,
+      wsBaseUrl: wsBaseUrl,
+      wsUrl: wsUrl,
+    }
+  }
 
   // 连接 WebSocket
   function connect() {
     try {
-      ws = new WebSocket(WS_URL)
+      if (reconnectTimer) {
+        clearTimeout(reconnectTimer)
+        reconnectTimer = null
+      }
+      if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)) {
+        return
+      }
+
+      const cfg = getPluginConfig()
+      console.log('[WebSocket] 使用配置连接:', cfg.wsUrl)
+      ws = new WebSocket(cfg.wsUrl)
 
       ws.onopen = function () {
         console.log('[WebSocket] 插件已连接到服务器')
@@ -418,7 +451,8 @@
 
             // 调用 Command Service API 的 forcesave 命令
             // 这个命令会：1) 保存文档到 OnlyOffice 服务器  2) 触发 callback (status=6)
-            const commandServiceUrl = 'http://192.168.93.128:8101/coauthoring/CommandService.ashx'
+            const commandServiceUrl =
+              getPluginConfig().documentServerUrl + '/coauthoring/CommandService.ashx'
 
             const commandPayload = {
               c: 'forcesave',
@@ -492,7 +526,8 @@
 
                 // 等待 1 秒后调用 forcesave
                 setTimeout(function () {
-                  const commandServiceUrl = 'http://192.168.93.128:8101/coauthoring/CommandService.ashx'
+                  const cfg = getPluginConfig()
+                  const commandServiceUrl = cfg.documentServerUrl + '/coauthoring/CommandService.ashx'
 
                   // 调用 forcesave 触发保存
                   fetch(commandServiceUrl, {
@@ -545,7 +580,7 @@
                                     console.log('[Plugin] ✓ 文档下载完成, 大小:', (arrayBuffer.byteLength / 1024).toFixed(2), 'KB')
 
                                     // 发送到后端保存
-                                    return fetch('http://192.168.93.1:4000/api/download-document', {
+                                    return fetch(cfg.callbackBaseUrl + '/api/download-document', {
                                       method: 'POST',
                                       headers: { 'Content-Type': 'application/json' },
                                       body: JSON.stringify({
@@ -1022,43 +1057,23 @@
     }
   }
 
-  // 初始化 WebSocket 连接
+  // 初始化 WebSocket：等 Asc.plugin.init 注入 info（含 plugins.options）后再连接
   function init() {
-    // 等待插件环境就绪
-    if (window.Asc && window.Asc.plugin) {
-      console.log('[WebSocket] 插件环境已就绪，开始连接 WebSocket...')
-      connect()
-    } else {
-      // 如果插件环境未就绪，延迟初始化（最多等待 10 秒）
-      var retryCount = 0
-      var maxRetries = 100 // 100 * 100ms = 10秒
-      var checkInterval = setInterval(function () {
-        retryCount++
-        if (window.Asc && window.Asc.plugin) {
-          clearInterval(checkInterval)
-          console.log('[WebSocket] 插件环境已就绪，开始连接 WebSocket...')
-          connect()
-        } else if (retryCount >= maxRetries) {
-          clearInterval(checkInterval)
-          console.error('[WebSocket] 插件环境初始化超时，无法连接 WebSocket')
-        }
-      }, 100)
-    }
+    console.log('[WebSocket] ws-client 已加载，等待 Asc.plugin.init 后连接')
   }
 
-  // 页面加载完成后初始化（后台模式也适用）
+  // 页面加载完成后仅完成脚本就绪；真正连接由 background.html 的 plugin.init 触发
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init)
   } else {
-    // 如果文档已加载，立即初始化
     init()
-    //
   }
 
-  // 暴露给全局，方便调试
+  // 暴露给全局，方便调试与 plugin.init 调用
   window.WSClient = {
     connect: connect,
     sendResult: sendResult,
+    getPluginConfig: getPluginConfig,
     getConnection: function () {
       return ws
     },

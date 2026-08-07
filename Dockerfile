@@ -2,11 +2,11 @@
 FROM node:22-alpine AS build
 WORKDIR /app
 
-# Default to npmmirror; override: docker build --build-arg NPM_REGISTRY=https://registry.npmjs.org/
+# 默认阿里云 npm 源；覆盖示例: --build-arg NPM_REGISTRY=https://registry.npmjs.org/
 ARG NPM_REGISTRY=https://registry.npmmirror.com
 RUN npm config set registry "$NPM_REGISTRY"
 
-COPY package.json package-lock.json ./
+COPY package.json package-lock.json .npmrc ./
 RUN npm ci
 
 COPY . .
@@ -27,7 +27,7 @@ ENV NODE_ENV=production
 ENV PORT=4000
 ENV STATIC_DIR=/app/dist
 
-COPY package.json package-lock.json ./
+COPY package.json package-lock.json .npmrc ./
 RUN npm ci --omit=dev
 
 COPY --from=build /app/dist ./dist

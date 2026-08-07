@@ -3,6 +3,7 @@
 interface AppRuntimeConfig {
   VITE_DOCUMENT_SERVER_URL?: string
   VITE_CALLBACK_BASE_URL?: string
+  VITE_WS_BASE_URL?: string
   VITE_ONLYOFFICE_JWT_SECRET?: string
   VITE_DOCUMENT_PATH?: string
 }
@@ -10,6 +11,7 @@ interface AppRuntimeConfig {
 interface ImportMetaEnv {
   readonly VITE_DOCUMENT_SERVER_URL: string
   readonly VITE_CALLBACK_BASE_URL: string
+  readonly VITE_WS_BASE_URL: string
   readonly VITE_ONLYOFFICE_JWT_SECRET: string
   readonly VITE_DOCUMENT_PATH: string
 }

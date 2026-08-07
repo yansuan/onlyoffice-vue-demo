@@ -10,6 +10,7 @@ const app = express()
 const DOCUMENT_SERVER_URL =
   process.env.VITE_DOCUMENT_SERVER_URL || 'http://192.168.93.128:19101'
 const CALLBACK_BASE_URL = process.env.VITE_CALLBACK_BASE_URL || 'http://192.168.93.1:19102'
+const WS_BASE_URL = process.env.VITE_WS_BASE_URL || 'ws://192.168.93.1:19102'
 const DOCUMENT_PATH = process.env.VITE_DOCUMENT_PATH || '/files/demo.docx'
 const JWT_SECRET = process.env.VITE_ONLYOFFICE_JWT_SECRET || ''
 const PORT = Number(process.env.PORT) || 4000
@@ -47,6 +48,7 @@ app.get('/config.js', (_req, res) => {
   const runtimeConfig = {
     VITE_DOCUMENT_SERVER_URL: DOCUMENT_SERVER_URL,
     VITE_CALLBACK_BASE_URL: CALLBACK_BASE_URL,
+    VITE_WS_BASE_URL: WS_BASE_URL,
     VITE_ONLYOFFICE_JWT_SECRET: JWT_SECRET,
     VITE_DOCUMENT_PATH: DOCUMENT_PATH,
   }
