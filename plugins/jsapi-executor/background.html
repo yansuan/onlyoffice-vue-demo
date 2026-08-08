@@ -31,41 +31,19 @@
                 console.log("window.Asc.plugin.init");
 
                 const info = window.Asc.plugin.info;
-                console.log('[Plugin] info (含 plugins.options):', info);
+                console.log('[Plugin] info:', info);
+                console.log('[Plugin] info.options:', info && info.options);
 
                 window.parent.document.getElementById("left-btn-navigation").click();
 
-                // 等 options 注入到 info 后再连 WebSocket
-                if (window.WSClient && typeof window.WSClient.connect === 'function') {
-                    console.log('[Plugin] 启动 WebSocket，配置:', window.WSClient.getPluginConfig());
+                // options 可能在 init 之后通过 updateOptions 到达，需等待
+                if (window.WSClient && typeof window.WSClient.startConnectWhenReady === 'function') {
+                    window.WSClient.startConnectWhenReady();
+                } else if (window.WSClient && typeof window.WSClient.connect === 'function') {
                     window.WSClient.connect();
                 } else {
                     console.error('[Plugin] WSClient 未就绪，无法连接 WebSocket');
                 }
-
-                // // 打开批注
-                // window.Asc.plugin.executeMethod("OpenComments", []);
-
-                // //隐藏插件菜单
-                // window.Asc.plugin.executeMethod("HidePluginMenu", []);
-
-                // //隐藏菜单栏
-                // window.Asc.plugin.executeMethod("HideMenuBar", []);
-
-                // //隐藏工具栏
-                // window.Asc.plugin.executeMethod("HideToolBar", []);
-
-                // //隐藏状态栏
-                // window.Asc.plugin.executeMethod("HideStatusBar", []);
-
-                // //隐藏工具栏按钮
-                // window.Asc.plugin.executeMethod("HideToolBarButton", []);
-
-                // //隐藏状态栏按钮
-                // window.Asc.plugin.executeMethod("HideStatusBarButton", []);
-
-                // //隐藏菜单栏按钮
-                // window.Asc.plugin.executeMethod("HideMenuBarButton", []);
             }
         })(window, undefined);
 

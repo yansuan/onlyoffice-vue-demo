@@ -9,14 +9,37 @@
   const DEFAULT_CALLBACK_BASE_URL = 'http://192.168.93.1:19102'
   const DEFAULT_DOCUMENT_SERVER_URL = 'http://192.168.93.128:19101'
   const DEFAULT_WS_BASE_URL = 'ws://192.168.93.1:19102'
+  let lastConnectedWsUrl = ''
 
-  // 从 editorConfig.plugins.options 注入到 Asc.plugin.info 的运行时配置
+  /**
+   * OnlyOffice 把 editorConfig.plugins.options 放到 Asc.plugin.info.options
+   * （通常经 updateOptions 消息下发，不一定在 init 时已就绪）。
+   * 可能是已合并的扁平对象，也可能是 { all, "asc.{guid}" } 结构。
+   */
+  function resolvePluginOptions() {
+    const plugin = window.Asc && window.Asc.plugin
+    const info = (plugin && plugin.info) || {}
+    const opts = info.options || {}
+    const guid = (plugin && plugin.guid) || ''
+
+    if (opts.wsUrl || opts.wsBaseUrl || opts.callbackBaseUrl || opts.documentServerUrl) {
+      return opts
+    }
+
+    const fromAll = opts.all && typeof opts.all === 'object' ? opts.all : {}
+    const fromGuid = guid && opts[guid] && typeof opts[guid] === 'object' ? opts[guid] : {}
+    return Object.assign({}, fromAll, fromGuid)
+  }
+
   function getPluginConfig() {
+    const options = resolvePluginOptions()
     const info = (window.Asc && window.Asc.plugin && window.Asc.plugin.info) || {}
-    const callbackBaseUrl = info.callbackBaseUrl || DEFAULT_CALLBACK_BASE_URL
-    const documentServerUrl = info.documentServerUrl || DEFAULT_DOCUMENT_SERVER_URL
-    const wsBaseUrl = info.wsBaseUrl || DEFAULT_WS_BASE_URL
-    let wsUrl = info.wsUrl || ''
+    const callbackBaseUrl =
+      options.callbackBaseUrl || info.callbackBaseUrl || DEFAULT_CALLBACK_BASE_URL
+    const documentServerUrl =
+      options.documentServerUrl || info.documentServerUrl || DEFAULT_DOCUMENT_SERVER_URL
+    const wsBaseUrl = options.wsBaseUrl || info.wsBaseUrl || DEFAULT_WS_BASE_URL
+    let wsUrl = options.wsUrl || info.wsUrl || ''
     if (!wsUrl && wsBaseUrl) {
       wsUrl = wsBaseUrl.replace(/\/$/, '').replace(/\?.*$/, '') + '?type=plugin'
     }
@@ -28,6 +51,7 @@
       documentServerUrl: documentServerUrl,
       wsBaseUrl: wsBaseUrl,
       wsUrl: wsUrl,
+      hasRuntimeOptions: !!(options.wsUrl || options.wsBaseUrl),
     }
   }
 
@@ -38,12 +62,29 @@
         clearTimeout(reconnectTimer)
         reconnectTimer = null
       }
-      if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)) {
+
+      const cfg = getPluginConfig()
+      if (
+        ws &&
+        lastConnectedWsUrl === cfg.wsUrl &&
+        (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)
+      ) {
         return
       }
 
-      const cfg = getPluginConfig()
-      console.log('[WebSocket] 使用配置连接:', cfg.wsUrl)
+      if (ws) {
+        try {
+          ws.onclose = null
+          ws.onerror = null
+          ws.close()
+        } catch (e) {
+          /* ignore */
+        }
+        ws = null
+      }
+
+      console.log('[WebSocket] 使用配置连接:', cfg.wsUrl, cfg.hasRuntimeOptions ? '(来自 plugins.options)' : '(默认回退)')
+      lastConnectedWsUrl = cfg.wsUrl
       ws = new WebSocket(cfg.wsUrl)
 
       ws.onopen = function () {
@@ -79,6 +120,40 @@
       console.error('[WebSocket] 连接失败:', error)
       reconnectTimer = setTimeout(connect, RECONNECT_DELAY)
     }
+  }
+
+  /** 等 info.options 就绪后再连；若已用错误默认地址，options 到达后会重连 */
+  function startConnectWhenReady() {
+    function tryConnectWithOptions() {
+      const cfg = getPluginConfig()
+      if (cfg.hasRuntimeOptions) {
+        connect()
+        return true
+      }
+      return false
+    }
+
+    if (tryConnectWithOptions()) {
+      return
+    }
+
+    console.log('[WebSocket] 等待 Asc.plugin.info.options (updateOptions)...')
+    const prev = window.Asc.plugin.onUpdateOptions
+    window.Asc.plugin.onUpdateOptions = function () {
+      if (typeof prev === 'function') {
+        prev.apply(this, arguments)
+      }
+      console.log('[WebSocket] onUpdateOptions:', resolvePluginOptions())
+      tryConnectWithOptions()
+    }
+
+    // 超时仍无 options 时用默认值，避免永久不连
+    setTimeout(function () {
+      if (!getPluginConfig().hasRuntimeOptions) {
+        console.warn('[WebSocket] 未收到 plugins.options，回退默认地址')
+      }
+      connect()
+    }, 3000)
   }
 
   // 发送结果给 Vue 应用
@@ -1072,6 +1147,7 @@
   // 暴露给全局，方便调试与 plugin.init 调用
   window.WSClient = {
     connect: connect,
+    startConnectWhenReady: startConnectWhenReady,
     sendResult: sendResult,
     getPluginConfig: getPluginConfig,
     getConnection: function () {
