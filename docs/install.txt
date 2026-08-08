@@ -68,7 +68,11 @@ Document Server 参考：
 
 插件 WebSocket 地址来自 App 的 editorConfig.plugins.options（即 VITE_WS_BASE_URL）。
 勿在社区版调用 createConnector/SetPluginsOptions，可能导致编辑器无法编辑。
-更新插件代码后需重新拷贝到 Document Server（见 docs/docker.txt），并硬刷新浏览器。
+更新插件代码后：
+
+  ./scripts/oo.sh
+
+或见 docs/docker.txt；完成后硬刷新浏览器。
 
 控制台正常日志：
 
@@ -83,7 +87,7 @@ Document Server 参考：
   docker restart onlyoffice-vue-demo
   docker rm -f onlyoffice-vue-demo
 
-## 一键脚本（可选）
+## 一键脚本
 
-  PowerShell:  .\scripts\docker-install.ps1
-  Bash:        ./scripts/docker-install.sh
+  构建并启动应用，再部署插件:  ./scripts/install.sh
+  仅部署插件到 Document Server:  ./scripts/oo.sh

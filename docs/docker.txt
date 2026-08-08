@@ -23,6 +23,8 @@ docker run -d \
 
 # 插件依赖 App 注入的 plugins.options（含 VITE_WS_BASE_URL）。
 # 修改 plugins/jsapi-executor 后必须重新拷贝并重启 Document Server：
+#   ./scripts/oo.sh
+# 等价手动命令：
 docker exec documentserver rm -rf /var/www/onlyoffice/documentserver/sdkjs-plugins/jsapi-executor
 docker cp plugins/jsapi-executor documentserver:/var/www/onlyoffice/documentserver/sdkjs-plugins/
 docker restart documentserver
