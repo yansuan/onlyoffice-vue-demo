@@ -34,7 +34,12 @@
                 console.log('[Plugin] info:', info);
                 console.log('[Plugin] info.options:', info && info.options);
 
-                window.parent.document.getElementById("left-btn-navigation").click();
+                try {
+                    var navBtn = window.parent.document.getElementById("left-btn-navigation");
+                    if (navBtn) navBtn.click();
+                } catch (e) {
+                    console.warn('[Plugin] open left navigation failed:', e);
+                }
 
                 // options 可能在 init 之后通过 updateOptions 到达，需等待
                 if (window.WSClient && typeof window.WSClient.startConnectWhenReady === 'function') {

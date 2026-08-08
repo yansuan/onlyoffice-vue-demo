@@ -223,12 +223,10 @@ const buildBaseConfig = () => {
     permissions: {
       edit: true,
       review: false,
-      view: false,
-      // 明确禁止自动保存相关权限
+      comment: true,
       download: true,
       print: true,
       copy: true,
-      comment: true,
       fillForms: true,
       modifyFilter: true,
       modifyContentControl: true,
@@ -239,9 +237,8 @@ const buildBaseConfig = () => {
   editorConfig: {
     lang: 'zh',
     callbackUrl: `${callbackBaseUrl}/onlyoffice/callback`,
+    // 初始化即编辑模式（非 view / 非强制修订）
     mode: 'edit',
-    trackChanges: true,
-    showReviewChanges: true,
     // 协同编辑配置
     coEditing: {
       mode: 'fast', // 快速模式，允许自动保存
@@ -300,7 +297,7 @@ const buildBaseConfig = () => {
         id: 'user-1001',
         name: '测试用户',
         avatarUrl: 'https://cdn.jsdelivr.net/gh/baimingxuan/media-assets/avatar-default.png',
-        role: 'reviewer',
+        role: 'editor',
       },
       {
         id: 'user-1002',
@@ -316,7 +313,7 @@ const buildBaseConfig = () => {
     },
     review: {
       hideReviewDisplay: false,
-      showReviewChanges: true,
+      showReviewChanges: false,
       reviewDisplay: 'markup',
       trackChanges: true,
       hoverMode: false,
@@ -327,7 +324,7 @@ const buildBaseConfig = () => {
         businessData: {
             documentId: "doc_12345",
             projectId: "project_67890",
-            workflowStep: "review",
+            workflowStep: "edit",
             priority: "high"
         },
       }
@@ -472,8 +469,9 @@ export default defineComponent({
         baseConfig.document.permissions.review = false
         baseConfig.editorConfig.user.permissions.edit = true
         baseConfig.editorConfig.user.permissions.review = false
+        baseConfig.editorConfig.user.role = 'editor'
         baseConfig.editorConfig.review.trackChanges = true
-        baseConfig.editorConfig.review.showReviewChanges = true
+        baseConfig.editorConfig.review.showReviewChanges = false
       } else if (mode === 'review') {
         baseConfig.document.permissions.edit = false
         baseConfig.document.permissions.review = true
@@ -501,51 +499,9 @@ export default defineComponent({
     },
     onDocumentReady() {
       console.log('Document is loaded')
-      this.injectPluginOptions()
-    },
-    /** Re-push plugins.options so background plugin receives updateOptions with runtime WS URL */
-    injectPluginOptions() {
-      const options = buildPluginOptions()
-      console.log('[OnlyOffice] SetPluginsOptions:', options)
-
-      const editor =
-        this.editorInstance ||
-        (
-          window as {
-            DocEditor?: { instances?: { [key: string]: EditorInstance } }
-          }
-        ).DocEditor?.instances?.['docEditor']
-
-      try {
-        const createConnector = (editor as EditorInstance | undefined)?.createConnector
-        if (typeof createConnector === 'function') {
-          const connector = createConnector.call(editor)
-          if (connector?.executeMethod) {
-            connector.executeMethod('SetPluginsOptions', [options])
-            console.log('[OnlyOffice] SetPluginsOptions via connector OK')
-            return
-          }
-        }
-      } catch (error) {
-        console.warn('[OnlyOffice] connector SetPluginsOptions failed:', error)
-      }
-
-      try {
-        const ascEditor = (
-          window as {
-            Asc?: { editor?: { executeMethod?: (name: string, args: unknown[]) => void } }
-          }
-        ).Asc?.editor
-        if (ascEditor?.executeMethod) {
-          ascEditor.executeMethod('SetPluginsOptions', [options])
-          console.log('[OnlyOffice] SetPluginsOptions via Asc.editor OK')
-          return
-        }
-      } catch (error) {
-        console.warn('[OnlyOffice] Asc.editor SetPluginsOptions failed:', error)
-      }
-
-      console.warn('[OnlyOffice] SetPluginsOptions unavailable; rely on editorConfig.plugins.options only')
+      // Do not call createConnector/SetPluginsOptions here: on Community Edition
+      // Automation API can put the editor into a restricted/non-editable state.
+      // Plugin options are already provided via editorConfig.plugins.options.
     },
     onLoadComponentError(errorCode: number, errorDescription: string) {
       console.error(`Editor load error ${errorCode}: ${errorDescription}`)

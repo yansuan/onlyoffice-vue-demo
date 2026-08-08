@@ -29,22 +29,66 @@
     return Object.assign({}, fromAll, fromGuid)
   }
 
+  /** Derive app host from document URL when options are late/missing */
+  function deriveFromDocumentUrl() {
+    const info = (window.Asc && window.Asc.plugin && window.Asc.plugin.info) || {}
+    const candidates = [
+      info.documentUrl,
+      info.url,
+      info.changeUrl,
+      info.mediaUrl,
+      info.fileUrl,
+    ]
+    for (let i = 0; i < candidates.length; i++) {
+      const raw = candidates[i]
+      if (!raw || typeof raw !== 'string') continue
+      try {
+        const u = new URL(raw)
+        if (!u.hostname) continue
+        const callbackBaseUrl = u.origin
+        const wsBaseUrl = (u.protocol === 'https:' ? 'wss:' : 'ws:') + '//' + u.host
+        return {
+          callbackBaseUrl: callbackBaseUrl,
+          wsBaseUrl: wsBaseUrl,
+          wsUrl: wsBaseUrl + '?type=plugin',
+        }
+      } catch (e) {
+        /* ignore invalid URL */
+      }
+    }
+    return null
+  }
+
   function getPluginConfig() {
     const options = resolvePluginOptions()
-    const hasRuntimeOptions = !!(options.wsUrl || options.wsBaseUrl)
-    const callbackBaseUrl = options.callbackBaseUrl || ''
-    const documentServerUrl = options.documentServerUrl || ''
-    const wsBaseUrl = options.wsBaseUrl || ''
+    let callbackBaseUrl = options.callbackBaseUrl || ''
+    let documentServerUrl = options.documentServerUrl || ''
+    let wsBaseUrl = options.wsBaseUrl || ''
     let wsUrl = options.wsUrl || ''
+    let source = 'plugins.options'
+
+    if (!(wsUrl || wsBaseUrl)) {
+      const derived = deriveFromDocumentUrl()
+      if (derived) {
+        callbackBaseUrl = callbackBaseUrl || derived.callbackBaseUrl
+        wsBaseUrl = derived.wsBaseUrl
+        wsUrl = derived.wsUrl
+        source = 'documentUrl'
+      }
+    }
+
     if (!wsUrl && wsBaseUrl) {
       wsUrl = wsBaseUrl.replace(/\/$/, '').replace(/\?.*$/, '') + '?type=plugin'
     }
+
+    const hasRuntimeOptions = !!(wsUrl || wsBaseUrl)
     return {
       callbackBaseUrl: callbackBaseUrl,
       documentServerUrl: documentServerUrl,
       wsBaseUrl: wsBaseUrl,
       wsUrl: wsUrl,
       hasRuntimeOptions: hasRuntimeOptions,
+      source: source,
     }
   }
 
@@ -84,7 +128,7 @@
         ws = null
       }
 
-      console.log('[WebSocket] 使用配置连接:', cfg.wsUrl, '(来自 plugins.options)')
+      console.log('[WebSocket] 使用配置连接:', cfg.wsUrl, '(来自 ' + cfg.source + ')')
       lastConnectedWsUrl = cfg.wsUrl
       ws = new WebSocket(cfg.wsUrl)
 

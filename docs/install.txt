@@ -66,14 +66,16 @@ Document Server 参考：
 
 ## 插件部署（jsapi-executor）
 
-插件 WebSocket 地址来自 App 的 plugins.options / SetPluginsOptions（即 VITE_WS_BASE_URL）。
+插件 WebSocket 地址来自 App 的 editorConfig.plugins.options（即 VITE_WS_BASE_URL）。
+勿在社区版调用 createConnector/SetPluginsOptions，可能导致编辑器无法编辑。
 更新插件代码后需重新拷贝到 Document Server（见 docs/docker.txt），并硬刷新浏览器。
 
 控制台正常日志：
 
   [WebSocket] 使用配置连接: ws://121.41.239.31:19102?type=plugin (来自 plugins.options)
 
-若仍连接 192.168.93.1，说明 Document Server 内插件未更新，或 options 未下发。
+若文档能打开但无法编辑：检查浏览器访问 Document Server 协同 WS
+（ws://主机:19101/.../doc/.../c/）是否被安全组拦截；协同通道不通时 OO 常会变成只读。
 
 ## 常用命令
 
