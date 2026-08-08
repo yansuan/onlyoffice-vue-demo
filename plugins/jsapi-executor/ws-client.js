@@ -6,10 +6,8 @@
   let reconnectTimer = null
   const handledRequests = new Set()
   const RECONNECT_DELAY = 3000
-  const DEFAULT_CALLBACK_BASE_URL = 'http://192.168.93.1:19102'
-  const DEFAULT_DOCUMENT_SERVER_URL = 'http://192.168.93.128:19101'
-  const DEFAULT_WS_BASE_URL = 'ws://192.168.93.1:19102'
   let lastConnectedWsUrl = ''
+  let optionsWaitTimer = null
 
   /**
    * OnlyOffice 把 editorConfig.plugins.options 放到 Asc.plugin.info.options
@@ -33,29 +31,24 @@
 
   function getPluginConfig() {
     const options = resolvePluginOptions()
-    const info = (window.Asc && window.Asc.plugin && window.Asc.plugin.info) || {}
-    const callbackBaseUrl =
-      options.callbackBaseUrl || info.callbackBaseUrl || DEFAULT_CALLBACK_BASE_URL
-    const documentServerUrl =
-      options.documentServerUrl || info.documentServerUrl || DEFAULT_DOCUMENT_SERVER_URL
-    const wsBaseUrl = options.wsBaseUrl || info.wsBaseUrl || DEFAULT_WS_BASE_URL
-    let wsUrl = options.wsUrl || info.wsUrl || ''
+    const hasRuntimeOptions = !!(options.wsUrl || options.wsBaseUrl)
+    const callbackBaseUrl = options.callbackBaseUrl || ''
+    const documentServerUrl = options.documentServerUrl || ''
+    const wsBaseUrl = options.wsBaseUrl || ''
+    let wsUrl = options.wsUrl || ''
     if (!wsUrl && wsBaseUrl) {
       wsUrl = wsBaseUrl.replace(/\/$/, '').replace(/\?.*$/, '') + '?type=plugin'
-    }
-    if (!wsUrl) {
-      wsUrl = DEFAULT_WS_BASE_URL + '?type=plugin'
     }
     return {
       callbackBaseUrl: callbackBaseUrl,
       documentServerUrl: documentServerUrl,
       wsBaseUrl: wsBaseUrl,
       wsUrl: wsUrl,
-      hasRuntimeOptions: !!(options.wsUrl || options.wsBaseUrl),
+      hasRuntimeOptions: hasRuntimeOptions,
     }
   }
 
-  // 连接 WebSocket
+  // 连接 WebSocket（必须已收到 plugins.options，禁止回退内网默认地址）
   function connect() {
     try {
       if (reconnectTimer) {
@@ -64,6 +57,14 @@
       }
 
       const cfg = getPluginConfig()
+      if (!cfg.hasRuntimeOptions || !cfg.wsUrl) {
+        console.error(
+          '[WebSocket] 拒绝连接：尚未收到 plugins.options（需要 wsUrl/wsBaseUrl）',
+          resolvePluginOptions(),
+        )
+        return
+      }
+
       if (
         ws &&
         lastConnectedWsUrl === cfg.wsUrl &&
@@ -83,7 +84,7 @@
         ws = null
       }
 
-      console.log('[WebSocket] 使用配置连接:', cfg.wsUrl, cfg.hasRuntimeOptions ? '(来自 plugins.options)' : '(默认回退)')
+      console.log('[WebSocket] 使用配置连接:', cfg.wsUrl, '(来自 plugins.options)')
       lastConnectedWsUrl = cfg.wsUrl
       ws = new WebSocket(cfg.wsUrl)
 
@@ -112,21 +113,32 @@
       }
 
       ws.onclose = function () {
-        console.log('[WebSocket] 连接已关闭，尝试重连...')
-        // 自动重连
+        console.log('[WebSocket] 连接已关闭')
+        if (!getPluginConfig().hasRuntimeOptions) {
+          console.warn('[WebSocket] 无 plugins.options，停止自动重连')
+          return
+        }
+        console.log('[WebSocket] 尝试重连...')
         reconnectTimer = setTimeout(connect, RECONNECT_DELAY)
       }
     } catch (error) {
       console.error('[WebSocket] 连接失败:', error)
-      reconnectTimer = setTimeout(connect, RECONNECT_DELAY)
+      if (getPluginConfig().hasRuntimeOptions) {
+        reconnectTimer = setTimeout(connect, RECONNECT_DELAY)
+      }
     }
   }
 
-  /** 等 info.options 就绪后再连；若已用错误默认地址，options 到达后会重连 */
+  /** 等 info.options / SetPluginsOptions(updateOptions) 就绪后再连，永不回退错误默认 IP */
   function startConnectWhenReady() {
     function tryConnectWithOptions() {
       const cfg = getPluginConfig()
+      console.log('[WebSocket] 当前 options:', resolvePluginOptions())
       if (cfg.hasRuntimeOptions) {
+        if (optionsWaitTimer) {
+          clearTimeout(optionsWaitTimer)
+          optionsWaitTimer = null
+        }
         connect()
         return true
       }
@@ -137,7 +149,7 @@
       return
     }
 
-    console.log('[WebSocket] 等待 Asc.plugin.info.options (updateOptions)...')
+    console.log('[WebSocket] 等待 Asc.plugin.info.options (updateOptions / SetPluginsOptions)...')
     const prev = window.Asc.plugin.onUpdateOptions
     window.Asc.plugin.onUpdateOptions = function () {
       if (typeof prev === 'function') {
@@ -147,14 +159,21 @@
       tryConnectWithOptions()
     }
 
-    // 超时仍无 options 时用默认值，避免永久不连
-    setTimeout(function () {
+    if (optionsWaitTimer) {
+      clearTimeout(optionsWaitTimer)
+    }
+    optionsWaitTimer = setTimeout(function () {
+      optionsWaitTimer = null
       if (!getPluginConfig().hasRuntimeOptions) {
-        console.warn('[WebSocket] 未收到 plugins.options，回退默认地址')
+        console.error(
+          '[WebSocket] 超时仍未收到 plugins.options。请确认 App.vue 已配置 plugins.options，并在 onDocumentReady 调用 SetPluginsOptions；且 Document Server 内插件已更新。',
+        )
+        return
       }
       connect()
-    }, 3000)
+    }, 15000)
   }
+
 
   // 发送结果给 Vue 应用
   function sendResult(requestId, type, result, error) {

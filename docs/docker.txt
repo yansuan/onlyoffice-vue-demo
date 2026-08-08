@@ -21,8 +21,13 @@ docker run -d \
   onlyoffice/documentserver:latest
 
 
+# 插件依赖 App 注入的 plugins.options（含 VITE_WS_BASE_URL）。
+# 修改 plugins/jsapi-executor 后必须重新拷贝并重启 Document Server：
 docker exec documentserver rm -rf /var/www/onlyoffice/documentserver/sdkjs-plugins/jsapi-executor
-docker cp jsapi-executor documentserver:/var/www/onlyoffice/documentserver/sdkjs-plugins
+docker cp plugins/jsapi-executor documentserver:/var/www/onlyoffice/documentserver/sdkjs-plugins/
 docker restart documentserver
-rm -rf ./jsapi-executor
 docker logs documentserver -f
+
+# 验收：浏览器控制台应出现
+# [WebSocket] 使用配置连接: ws://<公网IP>:19102?type=plugin (来自 plugins.options)
+# 不应再出现 192.168.93.1

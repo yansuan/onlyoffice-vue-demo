@@ -178,10 +178,38 @@ type HistoryData = {
 type EditorInstance = {
   refreshHistory?: (data: HistoryData) => void
   save?: () => void
+  createConnector?: () => {
+    executeMethod?: (name: string, args: unknown[]) => void
+  }
   [key: string]: any
 }
 
 const getEnv = () => getAppConfig()
+
+const PLUGIN_GUID = 'asc.{jsapi-executor-1234-5678-90ab-cdef12345678}'
+
+/** Shared payload for editorConfig.plugins.options and SetPluginsOptions */
+const buildPluginOptions = () => {
+  const { callbackBaseUrl, documentServerUrl, wsBaseUrl } = getEnv()
+  const wsUrl = buildWsUrl('plugin', wsBaseUrl)
+  const shared = {
+    callbackBaseUrl,
+    documentServerUrl,
+    wsBaseUrl,
+    wsUrl,
+  }
+  return {
+    all: {
+      keyAll: 'valueAll',
+      ...shared,
+    },
+    [PLUGIN_GUID]: {
+      key: 'document id',
+      name: '自定义数据',
+      ...shared,
+    },
+  }
+}
 
 const buildBaseConfig = () => {
   const { callbackBaseUrl, documentPath } = getEnv()
@@ -282,30 +310,9 @@ const buildBaseConfig = () => {
       },
     ],
     plugins: {
-      autostart: ['asc.{jsapi-executor-1234-5678-90ab-cdef12345678}'],
+      autostart: [PLUGIN_GUID],
       visible: false,
-      options: (() => {
-        const { callbackBaseUrl, documentServerUrl, wsBaseUrl } = getEnv()
-        const pluginGuid = 'asc.{jsapi-executor-1234-5678-90ab-cdef12345678}'
-        const wsUrl = buildWsUrl('plugin', wsBaseUrl)
-        const shared = {
-          callbackBaseUrl,
-          documentServerUrl,
-          wsBaseUrl,
-          wsUrl,
-        }
-        return {
-          all: {
-            keyAll: 'valueAll',
-            ...shared,
-          },
-          [pluginGuid]: {
-            key: 'document id',
-            name: '自定义数据',
-            ...shared,
-          },
-        }
-      })(),
+      options: buildPluginOptions(),
     },
     review: {
       hideReviewDisplay: false,
@@ -494,6 +501,51 @@ export default defineComponent({
     },
     onDocumentReady() {
       console.log('Document is loaded')
+      this.injectPluginOptions()
+    },
+    /** Re-push plugins.options so background plugin receives updateOptions with runtime WS URL */
+    injectPluginOptions() {
+      const options = buildPluginOptions()
+      console.log('[OnlyOffice] SetPluginsOptions:', options)
+
+      const editor =
+        this.editorInstance ||
+        (
+          window as {
+            DocEditor?: { instances?: { [key: string]: EditorInstance } }
+          }
+        ).DocEditor?.instances?.['docEditor']
+
+      try {
+        const createConnector = (editor as EditorInstance | undefined)?.createConnector
+        if (typeof createConnector === 'function') {
+          const connector = createConnector.call(editor)
+          if (connector?.executeMethod) {
+            connector.executeMethod('SetPluginsOptions', [options])
+            console.log('[OnlyOffice] SetPluginsOptions via connector OK')
+            return
+          }
+        }
+      } catch (error) {
+        console.warn('[OnlyOffice] connector SetPluginsOptions failed:', error)
+      }
+
+      try {
+        const ascEditor = (
+          window as {
+            Asc?: { editor?: { executeMethod?: (name: string, args: unknown[]) => void } }
+          }
+        ).Asc?.editor
+        if (ascEditor?.executeMethod) {
+          ascEditor.executeMethod('SetPluginsOptions', [options])
+          console.log('[OnlyOffice] SetPluginsOptions via Asc.editor OK')
+          return
+        }
+      } catch (error) {
+        console.warn('[OnlyOffice] Asc.editor SetPluginsOptions failed:', error)
+      }
+
+      console.warn('[OnlyOffice] SetPluginsOptions unavailable; rely on editorConfig.plugins.options only')
     },
     onLoadComponentError(errorCode: number, errorDescription: string) {
       console.error(`Editor load error ${errorCode}: ${errorDescription}`)

@@ -64,6 +64,17 @@ Document Server 参考：
   配置:   http://<主机IP>:19102/config.js
   DS:     http://<主机IP>:19101/
 
+## 插件部署（jsapi-executor）
+
+插件 WebSocket 地址来自 App 的 plugins.options / SetPluginsOptions（即 VITE_WS_BASE_URL）。
+更新插件代码后需重新拷贝到 Document Server（见 docs/docker.txt），并硬刷新浏览器。
+
+控制台正常日志：
+
+  [WebSocket] 使用配置连接: ws://121.41.239.31:19102?type=plugin (来自 plugins.options)
+
+若仍连接 192.168.93.1，说明 Document Server 内插件未更新，或 options 未下发。
+
 ## 常用命令
 
   docker logs -f onlyoffice-vue-demo
