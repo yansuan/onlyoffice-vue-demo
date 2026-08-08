@@ -2,8 +2,13 @@
 # Build and run onlyoffice-vue-demo, then deploy jsapi-executor into Document Server.
 # Usage:
 #   ./scripts/install.sh
+#   bash scripts/install.sh
 # Override any env before run, e.g.:
 #   VITE_CALLBACK_BASE_URL=http://x.x.x.x:19102 ./scripts/install.sh
+# Re-exec under bash when invoked as `sh scripts/install.sh` (dash has no pipefail).
+if [ -z "${BASH_VERSION:-}" ]; then
+  exec bash "$0" "$@"
+fi
 set -euo pipefail
 cd "$(dirname "$0")/.."
 

@@ -89,5 +89,6 @@ Document Server 参考：
 
 ## 一键脚本
 
-  构建并启动应用，再部署插件:  ./scripts/install.sh
-  仅部署插件到 Document Server:  ./scripts/oo.sh
+  构建并启动应用，再部署插件:  bash scripts/install.sh
+  仅部署插件到 Document Server:  bash scripts/oo.sh
+  （也可用 ./scripts/install.sh；勿用 dash 的 sh 直接跑，脚本会自动转 bash）

@@ -5,6 +5,11 @@
 # Usage:
 #   ./scripts/oo.sh           # copy, restart, follow logs
 #   ./scripts/oo.sh --no-logs # copy, restart, exit
+#   bash scripts/oo.sh
+# Re-exec under bash when invoked as `sh scripts/oo.sh` (dash has no pipefail).
+if [ -z "${BASH_VERSION:-}" ]; then
+  exec bash "$0" "$@"
+fi
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
